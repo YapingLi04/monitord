@@ -24,6 +24,8 @@ pub mod pid1;
 pub mod system;
 pub mod timer;
 pub mod units;
+pub mod varlink;
+pub mod varlink_units;
 
 pub const DEFAULT_DBUS_ADDRESS: &str = "unix:path=/run/dbus/system_bus_socket";
 
@@ -133,11 +135,18 @@ pub async fn stat_collector(
 
         // Run service collectors if there are services listed in config
         if config.units.enabled {
-            join_set.spawn(crate::units::update_unit_stats(
-                config.clone(),
-                sdc.clone(),
-                locked_machine_stats.clone(),
-            ));
+            if config.varlink.enabled {
+                join_set.spawn(crate::varlink_units::update_unit_stats(
+                    config.clone(),
+                    locked_machine_stats.clone(),
+                ));
+            } else {
+                join_set.spawn(crate::units::update_unit_stats(
+                    config.clone(),
+                    sdc.clone(),
+                    locked_machine_stats.clone(),
+                ));
+            }
         }
 
         if config.machines.enabled {
