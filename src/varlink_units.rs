@@ -15,36 +15,19 @@ use tracing::error;
 use crate::MachineStats;
 use crate::units::SystemdUnitStats;
 use crate::units::ServiceStats;
-use crate::units::SystemdUnitActiveState;
-use crate::units::SystemdUnitLoadState;
 use crate::units::UnitStates;
-use crate::varlink::metrics_gen::{ListOutput, MetricValue, Metrics};
+use crate::varlink::metrics_gen::{ListOutput, Metrics};
 use futures_util::stream::TryStreamExt;
 use zlink::unix;
+
+// Re-export for use in this module
+use crate::unit_constants::{SystemdUnitActiveState, SystemdUnitLoadState};
 
 const METRICS_SOCKET_PATH: &str = "/run/systemd/metrics/io.systemd.Manager";
 
 pub const SERVICE_FIELD_NAMES: &[&str] = &ServiceStats::FIELD_NAMES_AS_ARRAY;
 pub const UNIT_FIELD_NAMES: &[&str] = &SystemdUnitStats::FIELD_NAMES_AS_ARRAY;
 pub const UNIT_STATES_FIELD_NAMES: &[&str] = &UnitStates::FIELD_NAMES_AS_ARRAY;
-
-/// Check if we're a loaded unit and if so evaluate if we're acitive or not
-/// If we're not
-/// Only potentially mark unhealthy for LOADED units that are not active
-pub fn is_unit_unhealthy(
-    active_state: SystemdUnitActiveState,
-    load_state: SystemdUnitLoadState,
-) -> bool {
-    match load_state {
-        // We're loaded so let's see if we're active or not
-        SystemdUnitLoadState::loaded => !matches!(active_state, SystemdUnitActiveState::active),
-        // An admin can change a unit to be masked on purpose
-        // so we are going to ignore all masked units due to that
-        SystemdUnitLoadState::masked => false,
-        // Otherwise, we're unhealthy
-        _ => true,
-    }
-}
 
 /// Parse a string value from a metric into an enum type with a default fallback
 fn parse_metric_enum<T: FromStr>(metric: &ListOutput, default: T) -> T {
@@ -185,6 +168,8 @@ pub async fn update_unit_stats(
 mod tests {
     use super::*;
     use strum::IntoEnumIterator;
+    use crate::unit_constants::is_unit_unhealthy;
+    use crate::varlink::metrics_gen::MetricValue;
 
     // Helper functions to create MetricValue for tests
     fn string_value(s: &str) -> MetricValue {

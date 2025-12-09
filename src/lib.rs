@@ -23,6 +23,7 @@ pub mod networkd;
 pub mod pid1;
 pub mod system;
 pub mod timer;
+pub mod unit_constants;
 pub mod units;
 pub mod varlink;
 pub mod varlink_units;
