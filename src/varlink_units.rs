@@ -13,11 +13,12 @@ use tracing::error;
 
 use crate::MachineStats;
 use crate::units::SystemdUnitStats;
-use crate::units::SystemdUnitActiveState;
-use crate::units::SystemdUnitLoadState;
 use crate::varlink::metrics::{ListOutput, MetricValue, Metrics};
 use futures_util::stream::TryStreamExt;
 use zlink::unix;
+
+// Re-export for use in this module
+use crate::unit_constants::{SystemdUnitActiveState, SystemdUnitLoadState};
 
 const METRICS_SOCKET_PATH: &str = "/run/systemd/metrics/io.systemd.Manager";
 
@@ -162,7 +163,6 @@ pub async fn update_unit_stats(
 mod tests {
     use super::*;
 
-    // Helper functions to create MetricValue for tests
     fn string_value(s: &str) -> MetricValue {
         MetricValue {
             string: Some(s.to_string()),
