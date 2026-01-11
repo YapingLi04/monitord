@@ -153,6 +153,16 @@ impl Default for DBusStatsConfig {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VarlinkConfig {
+    pub enabled: bool,
+}
+impl Default for VarlinkConfig {
+    fn default() -> Self {
+        VarlinkConfig { enabled: true }
+    }
+}
+
 /// Config struct
 /// Each section represents an ini file section
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -166,6 +176,7 @@ pub struct Config {
     pub timers: TimersConfig,
     pub units: UnitsConfig,
     pub dbus_stats: DBusStatsConfig,
+    pub varlink: VarlinkConfig,
 }
 
 impl From<Ini> for Config {
@@ -460,6 +471,7 @@ output_format = json-flat
                 peer_stats: true,
                 cgroup_stats: true,
             },
+            varlink: VarlinkConfig { enabled: true },
         };
 
         let mut monitord_config = NamedTempFile::new().expect("Unable to make named tempfile");
